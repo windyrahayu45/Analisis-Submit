@@ -11,8 +11,8 @@ pip install -r requirements.txt
 
 ## Setup Environment - Shell/Terminal
 ```
-mkdir proyek_analisis_data
-cd proyek_analisis_data
+mkdir Analisis-Submit
+cd Analisis-Submit
 pipenv install
 pipenv shell
 pip install -r requirements.txt
@@ -22,3 +22,6 @@ pip install -r requirements.txt
 ```
 streamlit run dash.py
 ```
+
+## Live Dashboard
+https://air-quality-wanliu.streamlit.app/
