@@ -21,24 +21,29 @@ pollutants = ["PM2.5", "PM10", "SO2", "NO2", "CO", "O3"]
 # Title
 st.title("Dasbor Kualitas Udara")
 
-# Sidebar
+# Sidebar - Filter Tahun dan Bulan
 st.sidebar.title("Pengaturan Dasbor")
+year = st.sidebar.selectbox("Pilih Tahun", sorted(data.index.year.unique()))
+month = st.sidebar.selectbox("Pilih Bulan", range(1, 13))
+filtered_data = data[(data.index.year == year) & (data.index.month == month)]
+
+# Filter Polutan
 option = st.sidebar.selectbox("Pilih Polutan untuk Analisis Lebih Lanjut", pollutants)
 
-# Show Data
-st.header("Data Kualitas Udara")
-st.write("Menampilkan data dari tahun 2013 hingga 2017.")
-st.write(data.head())
+# Show Filtered Data
+st.header(f"Data Kualitas Udara untuk {year}-{month:02d}")
+st.write("Menampilkan data yang sudah difilter berdasarkan tahun dan bulan yang dipilih.")
+st.write(filtered_data.head())
 
 # Ringkasan Statistik
 st.header("Ringkasan Statistik Polutan")
-st.write(data[pollutants].describe())
+st.write(filtered_data[pollutants].describe())
 
 # Distribusi Polutan
 st.header(f"Distribusi Konsentrasi {option}")
 fig, ax = plt.subplots()
-sns.histplot(data[option], bins=30, kde=True, ax=ax, color='skyblue')
-ax.set_title(f'Distribusi Konsentrasi {option}')
+sns.histplot(filtered_data[option], bins=30, kde=True, ax=ax, color='skyblue')
+ax.set_title(f'Distribusi Konsentrasi {option} untuk {year}-{month:02d}')
 ax.set_xlabel('Konsentrasi')
 ax.set_ylabel('Frekuensi')
 st.pyplot(fig)
@@ -58,11 +63,11 @@ st.pyplot(fig)
 
 # Analisis Musiman
 st.header("Rata-rata Musiman Konsentrasi Polutan")
-seasonal_avg = data.groupby('season')[pollutants].mean()
+seasonal_avg = filtered_data.groupby('season')[pollutants].mean()
 
 fig, ax = plt.subplots(figsize=(10, 6))
 seasonal_avg.plot(kind='bar', ax=ax, colormap='viridis')
-ax.set_title('Rata-rata Konsentrasi Polutan Berdasarkan Musim')
+ax.set_title(f'Rata-rata Konsentrasi Polutan Berdasarkan Musim untuk {year}-{month:02d}')
 ax.set_ylabel('Konsentrasi')
 ax.set_xlabel('Musim')
 ax.set_xticklabels(['Spring', 'Summer', 'Autumn', 'Winter'], rotation=0)
@@ -70,7 +75,7 @@ st.pyplot(fig)
 
 # Korelasi Antar Polutan
 st.header("Korelasi Antar Polutan")
-correlation_matrix = data[pollutants].corr()
+correlation_matrix = filtered_data[pollutants].corr()
 
 fig, ax = plt.subplots(figsize=(8, 6))
 sns.heatmap(correlation_matrix, annot=True, cmap="YlGnBu", ax=ax)
