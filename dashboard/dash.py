@@ -63,15 +63,19 @@ st.pyplot(fig)
 
 # Analisis Musiman
 st.header("Rata-rata Musiman Konsentrasi Polutan")
-seasonal_avg = filtered_data.groupby('season')[pollutants].mean()
 
-fig, ax = plt.subplots(figsize=(10, 6))
-seasonal_avg.plot(kind='bar', ax=ax, colormap='viridis')
-ax.set_title(f'Rata-rata Konsentrasi Polutan Berdasarkan Musim untuk {year}-{month:02d}')
-ax.set_ylabel('Konsentrasi')
-ax.set_xlabel('Musim')
-ax.set_xticklabels(['Spring', 'Summer', 'Autumn', 'Winter'], rotation=0)
-st.pyplot(fig)
+if not filtered_data.empty:
+    seasonal_avg = filtered_data.groupby('season')[pollutants].mean()
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    seasonal_avg.plot(kind='bar', ax=ax, colormap='viridis')
+    ax.set_title(f'Rata-rata Konsentrasi Polutan Berdasarkan Musim untuk {year}-{month:02d}')
+    ax.set_ylabel('Konsentrasi')
+    ax.set_xlabel('Musim')
+    ax.set_xticklabels(['Spring', 'Summer', 'Autumn', 'Winter'], rotation=0)
+    st.pyplot(fig)
+else:
+    st.write("Tidak ada data untuk bulan dan tahun yang dipilih.")
 
 # Korelasi Antar Polutan
 st.header("Korelasi Antar Polutan")
