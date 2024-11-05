@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 ## Run steamlit app
 ```
-streamlit run dash.py
+streamlit run dashboard/dash.py
 ```
 
 ## Live Dashboard
