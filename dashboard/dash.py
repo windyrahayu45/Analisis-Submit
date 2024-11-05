@@ -26,7 +26,7 @@ st.subheader("Data Kualitas Udara")
 st.write(df.head())
 
 # Rata-rata Polutan
-st.subheader("Rata-rata Konsentrasi Polutan di Perkotaan")
+st.subheader("Rata-rata Konsentrasi Polutan di Wanliu")
 average_pollutants = df[['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].mean()
 
 # Plot rata-rata polutan
