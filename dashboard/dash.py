@@ -1,72 +1,78 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.pyplot as plt
 
-# Judul Aplikasi
-st.title("Dashboard Sederhana Kualitas Udara Wanliu Station")
-
-# Deskripsi aplikasi
-st.markdown("""
-Aplikasi ini menampilkan data kualitas udara dengan beberapa visualisasi 
-untuk melihat pola polutan utama seiring dengan waktu dan kondisi cuaca.
-""")
-
-# Memuat Data
-@st.cache_data
+# Load Data
+@st.cache
 def load_data():
-    df = pd.read_csv('./data/PRSA_Data_Wanliu_20130301-20170228.csv')  # Pastikan mengganti path ke dataset Anda
-    df['datetime'] = pd.to_datetime(df[['year', 'month', 'day', 'hour']])
-    return df
+    data = pd.read_csv('./data/PRSA_Data_Wanliu_20130301-20170228.csv')
+    data['datetime'] = pd.to_datetime(data[['year', 'month', 'day', 'hour']])
+    data.set_index('datetime', inplace=True)
+    data['season'] = data.index.month.map(lambda x: 'Spring' if x in [3, 4, 5] 
+                                          else 'Summer' if x in [6, 7, 8] 
+                                          else 'Autumn' if x in [9, 10, 11] 
+                                          else 'Winter')
+    return data
 
-df = load_data()
+data = load_data()
+pollutants = ["PM2.5", "PM10", "SO2", "NO2", "CO", "O3"]
 
-# Menampilkan Dataframe
-st.subheader("Data Kualitas Udara")
-st.write(df.head())
+# Title
+st.title("Dasbor Kualitas Udara")
 
-# Rata-rata Polutan
-st.subheader("Rata-rata Konsentrasi Polutan di Wanliu")
-average_pollutants = df[['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].mean()
+# Sidebar
+st.sidebar.title("Pengaturan Dasbor")
+option = st.sidebar.selectbox("Pilih Polutan untuk Analisis Lebih Lanjut", pollutants)
 
-# Plot rata-rata polutan
+# Show Data
+st.header("Data Kualitas Udara")
+st.write("Menampilkan data dari tahun 2013 hingga 2017.")
+st.write(data.head())
+
+# Ringkasan Statistik
+st.header("Ringkasan Statistik Polutan")
+st.write(data[pollutants].describe())
+
+# Distribusi Polutan
+st.header(f"Distribusi Konsentrasi {option}")
 fig, ax = plt.subplots()
-average_pollutants.plot(kind='bar', color='skyblue', ax=ax)
-ax.set_title('Rata-rata Konsentrasi Polutan')
-ax.set_ylabel('Konsentrasi Rata-rata (µg/m³)')
-ax.set_xlabel('Polutan')
+sns.histplot(data[option], bins=30, kde=True, ax=ax, color='skyblue')
+ax.set_title(f'Distribusi Konsentrasi {option}')
+ax.set_xlabel('Konsentrasi')
+ax.set_ylabel('Frekuensi')
 st.pyplot(fig)
 
-# Tren PM2.5 Seiring Waktu
-st.subheader("Tren PM2.5 Seiring Waktu")
-plt.figure(figsize=(14, 7))
-sns.lineplot(data=df, x='datetime', y='PM2.5', label='PM2.5', color='blue')
-plt.title("Tren PM2.5 Seiring Waktu")
-plt.xlabel("Tanggal")
-plt.ylabel("Konsentrasi PM2.5 (µg/m³)")
-plt.xticks(rotation=45)
-plt.grid()
-st.pyplot(plt)
+# Tren Waktu Polutan
+st.header("Tren Waktu Konsentrasi Polutan")
+monthly_avg = data[pollutants].resample('M').mean()
 
-# Filter Berdasarkan Tahun
-st.sidebar.header("Filter Data")
-year_filter = st.sidebar.slider("Pilih Tahun", int(df['year'].min()), int(df['year'].max()), (2013, 2017))
+fig, ax = plt.subplots(figsize=(14, 8))
+for pollutant in pollutants:
+    ax.plot(monthly_avg.index, monthly_avg[pollutant], label=pollutant)
+ax.set_title('Perubahan Bulanan Konsentrasi Polutan')
+ax.set_xlabel('Bulan')
+ax.set_ylabel('Konsentrasi Polutan')
+ax.legend()
+st.pyplot(fig)
 
-filtered_data = df[(df['year'] >= year_filter[0]) & (df['year'] <= year_filter[1])]
+# Analisis Musiman
+st.header("Rata-rata Musiman Konsentrasi Polutan")
+seasonal_avg = data.groupby('season')[pollutants].mean()
 
-# Visualisasi Filtered Data
-st.subheader("Data yang Difilter Berdasarkan Tahun")
-st.write(filtered_data[['datetime', 'PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']].head(10))
+fig, ax = plt.subplots(figsize=(10, 6))
+seasonal_avg.plot(kind='bar', ax=ax, colormap='viridis')
+ax.set_title('Rata-rata Konsentrasi Polutan Berdasarkan Musim')
+ax.set_ylabel('Konsentrasi')
+ax.set_xlabel('Musim')
+ax.set_xticklabels(['Spring', 'Summer', 'Autumn', 'Winter'], rotation=0)
+st.pyplot(fig)
 
-# Menampilkan Plot Filtered Data
-st.subheader("Tren PM2.5 Berdasarkan Tahun yang Difilter")
-plt.figure(figsize=(14, 7))
-sns.lineplot(data=filtered_data, x='datetime', y='PM2.5', label='PM2.5', color='green')
-plt.title("Tren PM2.5 Berdasarkan Tahun yang Difilter")
-plt.xlabel("Tanggal")
-plt.ylabel("Konsentrasi PM2.5 (µg/m³)")
-plt.xticks(rotation=45)
-plt.grid()
-st.pyplot(plt)
+# Korelasi Antar Polutan
+st.header("Korelasi Antar Polutan")
+correlation_matrix = data[pollutants].corr()
 
-st.markdown("**Sumber Data**: Dataset Kualitas Udara")
+fig, ax = plt.subplots(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap="YlGnBu", ax=ax)
+ax.set_title('Korelasi Antar Polutan')
+st.pyplot(fig)
