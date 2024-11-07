@@ -64,18 +64,32 @@ st.pyplot(fig)
 # Analisis Musiman
 st.header("Rata-rata Musiman Konsentrasi Polutan")
 
+# Ensure data is available for selected month and year
 if not filtered_data.empty:
-    seasonal_avg = filtered_data.groupby('season')[pollutants].mean()
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    seasonal_avg.plot(kind='bar', ax=ax, colormap='viridis')
-    ax.set_title(f'Rata-rata Konsentrasi Polutan Berdasarkan Musim untuk {year}-{month:02d}')
-    ax.set_ylabel('Konsentrasi')
-    ax.set_xlabel('Musim')
-    ax.set_xticklabels(['Spring', 'Summer', 'Autumn', 'Winter'], rotation=0)
-    st.pyplot(fig)
+    try:
+        # Define seasons to ensure consistent labels
+        seasons = ['Spring', 'Summer', 'Autumn', 'Winter']
+        
+        # Calculate seasonal average for selected data
+        seasonal_avg = (
+            filtered_data.groupby('season')[pollutants]
+            .mean()
+            .reindex(seasons)  # Reindex to include all seasons, even if some are missing
+        )
+        
+        # Plot seasonal averages
+        fig, ax = plt.subplots(figsize=(10, 6))
+        seasonal_avg.plot(kind='bar', ax=ax, colormap='viridis')
+        ax.set_title(f'Rata-rata Konsentrasi Polutan Berdasarkan Musim untuk {year}-{month:02d}')
+        ax.set_ylabel('Konsentrasi')
+        ax.set_xlabel('Musim')
+        ax.set_xticklabels(seasons, rotation=0)
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"Error calculating or plotting seasonal averages: {e}")
 else:
     st.write("Tidak ada data untuk bulan dan tahun yang dipilih.")
+
 
 # Korelasi Antar Polutan
 st.header("Korelasi Antar Polutan")
